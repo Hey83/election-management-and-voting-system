@@ -62,6 +62,12 @@ jobs:
       - name: Install locked project dependencies
         run: uv sync --locked
 
+      - name: Install Qt EGL runtime
+        if: matrix.level == 'integration'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends libegl1
+
       - name: Run pytest
         env:
           ELECTION_TEST_DATABASE_URL: ${{ matrix.mysql && format('mysql+pymysql://election_test:election-test-ci@127.0.0.1:{0}/election_test?charset=utf8mb4', job.services.mysql.ports[3306]) || '' }}
