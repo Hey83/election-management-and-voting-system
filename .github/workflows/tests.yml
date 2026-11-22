@@ -1,0 +1,76 @@
+name: Tests
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  pytest:
+    name: ${{ matrix.name }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - level: unit
+            name: Unit tests
+            mysql: false
+          - level: integration
+            name: Component integration tests
+            mysql: true
+          - level: system
+            name: System tests
+            mysql: true
+          - level: release
+            name: Release checks
+            mysql: false
+    env:
+      UV_PYTHON_PREFERENCE: only-managed
+    services:
+      mysql:
+        image: ${{ matrix.mysql && 'mysql:8.4@sha256:a0225d1ea6631c8bc2385dc4c2faba17bbf1834ecf369e1659a9a382bd8d5dd7' || '' }}
+        env:
+          MYSQL_DATABASE: election_test
+          MYSQL_USER: election_test
+          MYSQL_PASSWORD: election-test-ci
+          MYSQL_RANDOM_ROOT_PASSWORD: "yes"
+        ports:
+          - "3306/tcp"
+        options: >-
+          --health-cmd="mysql --protocol=TCP --host=127.0.0.1 --user=election_test --password=election-test-ci --database=election_test --execute='SELECT 1'"
+          --health-interval=3s
+          --health-timeout=3s
+          --health-retries=40
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+
+      - name: Install locked project dependencies
+        run: uv sync --locked
+
+      - name: Run pytest
+        env:
+          ELECTION_TEST_DATABASE_URL: ${{ matrix.mysql && format('mysql+pymysql://election_test:election-test-ci@127.0.0.1:{0}/election_test?charset=utf8mb4', job.services.mysql.ports[3306]) || '' }}
+        run: uv run --locked --no-sync pytest tests/${{ matrix.level }} --junitxml=pytest-results.xml
+
+      - name: Upload pytest results
+        if: ${{ !cancelled() && hashFiles('pytest-results.xml') != '' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: pytest-${{ matrix.level }}
+          path: pytest-results.xml
+          retention-days: 14

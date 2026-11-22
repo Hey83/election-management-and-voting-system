@@ -6,6 +6,7 @@
 /.idea
 /.runtime
 /.scratch/
+/ignore-docs/
 .env
 .env.*
 !.env.example

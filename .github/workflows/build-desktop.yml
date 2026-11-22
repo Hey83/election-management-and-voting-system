@@ -52,6 +52,11 @@ jobs:
           uv run --locked --no-sync
           python build.py --run-name ci
 
+      - name: Verify native release artifact and startup
+        run: >-
+          uv run --locked --no-sync python -m tests.release.verify_artifact
+          --platform ${{ matrix.platform }} --architecture ${{ matrix.architecture }} --run-name ci
+
       - name: Upload application ZIP
         # Build artifacts only; connected-client and Windows 11 qualification are separate checks.
         uses: actions/upload-artifact@v7

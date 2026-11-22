@@ -154,6 +154,48 @@ docker compose -f .runtime/demo-e-polling/config.yml stop
 
 Repeat the two startup commands to resume the e-polling demo with the saved data and passwords.
 
+## Run the core tests
+
+From the project folder, install the locked dependencies and run a test level by directory.
+
+```sh
+uv sync --locked
+uv run --locked --no-sync pytest tests/unit
+uv run --locked --no-sync pytest tests/release
+```
+
+| Level | Pytest directory | What it exercises |
+| --- | --- | --- |
+| Unit | `tests/unit` | Domain arithmetic, validation and boundary values |
+| Component / integration | `tests/integration` | API contracts against MySQL and desktop component behavior |
+| System | `tests/system` | Complete client and server workflows over HTTPS |
+| Release checks | `tests/release` | Package and release receipt verification |
+
+For the full suite on macOS or Linux, start Docker and run an empty MySQL 8.4 instance with a
+dedicated test account. Wait until the MySQL check prints `1` before running pytest.
+
+```sh
+docker run --detach --rm --name election-desk-pytest --publish 127.0.0.1:13316:3306 \
+  --env MYSQL_DATABASE=election_test --env MYSQL_USER=election_test \
+  --env MYSQL_PASSWORD=election-test-local --env MYSQL_RANDOM_ROOT_PASSWORD=yes mysql:8.4
+docker exec election-desk-pytest sh -c 'MYSQL_PWD="$MYSQL_PASSWORD" mysql --protocol=TCP -h 127.0.0.1 -u "$MYSQL_USER" "$MYSQL_DATABASE" -N -e "SELECT 1"'
+```
+
+```sh
+ELECTION_TEST_DATABASE_URL='mysql+pymysql://election_test:election-test-local@127.0.0.1:13316/election_test?charset=utf8mb4' \
+  uv run --locked --no-sync pytest
+docker stop election-desk-pytest
+```
+
+The MySQL tests apply migrations and remove the tables they create. Use an empty, disposable
+schema ending in `_test`. Select `tests/integration` or `tests/system` to run that level on its
+own. Use `pytest -m 'not mysql'` to run all database-free cases.
+
+GitHub Actions runs the four levels as separate checks on pushes and when a pull request opens,
+reopens, or receives new commits. Each check attaches a JUnit XML report. The native build
+workflow verifies its real distribution archives before upload.
+[Test workflow](.github/workflows/tests.yml) · [Testing strategy](docs/12-testing-strategy.md#2-test-levels)
+
 ## Build the desktop app
 
 Run these commands from the project folder on the target operating system.

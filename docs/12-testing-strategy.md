@@ -1,9 +1,7 @@
 # 12. Testing strategy and test record
 
-Status of this document: the strategy and the test cases are written; the test cases have
-not been executed by the authors of this pack. Every "Result" cell is `TODO(Name)` until the
-person in charge has run the test and recorded what happened. Do not copy an expected result
-into a result cell without running the test.
+The automated suites are in `tests/`. In the manual records below, each `TODO(Name)` marks a
+case awaiting an observed result from its assigned tester.
 
 ## 1. Goals
 
@@ -18,15 +16,25 @@ effort is concentrated on arithmetic rules, revisions and role checks.
 
 ## 2. Test levels
 
-| Level (Lecture 8) | Object under test | Technique | Tool | Who |
-| --- | --- | --- | --- | --- |
-| Unit testing | Pure functions and classes: serial-number ranges (`stock_serials.py`), totals (`counting_totals.py`), turnout derivation (`turnout_basis.py`), password policy (`security.py`) | Partition testing, boundary values | pytest | Developer |
-| Component (interface) testing | One API router with a real MySQL database: every route with valid input, invalid input, wrong role, stale revision, repeated request | Requirements-based; interface errors (misuse, misunderstanding, timing) | pytest + FastAPI `TestClient` (`*_api.py`) | Developer |
-| Component testing, client | One desktop controller or one QML page against a test server | State after each signal; error message shown | pytest + PySide6 (`*_desktop.py`, `test_qml_*.py`) | Developer |
-| System testing | Whole system through the user interface: use cases UC-01 to UC-11 as scenarios across roles | Scenario / use-case testing | Manual, on a rehearsal copy of the demo server | Person in charge of each module |
-| Release testing | The packaged v1.1.0 client on Windows and macOS against a Docker server; non-functional requirements | Requirements-based; installation; performance target | Manual + GitHub Actions `build-desktop.yml` | All |
-| User (acceptance) testing | The walkthroughs of `demo/README.md` (live e-polling and the three paper-ballot stages) performed by a group member who did not work on that module | Alpha testing against the reference manual | Manual | All |
-| Regression testing | Everything above after a change | Re-run the automated suite; re-run the manual cases of the changed module | pytest; this document | Developer |
+The levels follow COMP 8500SEF Lecture 8, *Software Testing*. Slides 16–19 define the development
+levels, slides 32–39 cover interface and use-case testing, and slides 50–52 describe requirements-based
+release testing.
+
+| Level | Automated suite | How to demonstrate it |
+| --- | --- | --- |
+| Unit | `tests/unit` | Run count arithmetic, serial-number partitions and boundaries, reporting intervals and configuration validation without a running server. |
+| Component / integration | `tests/integration` | Exercise the FastAPI interface against MySQL 8.4 and the desktop component interfaces with pytest. Cases include valid operations, wrong roles, stale versions, and repeated requests. |
+| System | `tests/system` | Follow complete e-polling and paper-counting scenarios through a real HTTPS server and MySQL. Observe the desktop vote and tally views and the paper election's exported results. |
+| Automated release checks | `tests/release` and `build-desktop.yml` | Run package and receipt checks on pushes and pull requests. The native build workflow applies the verifier to the produced Windows and macOS archives before upload. |
+
+Regression testing (slide 48) reruns these suites after changes. Partition and boundary testing
+(slides 25–28) and interface testing (slides 32–36) are test design techniques used within the levels.
+The system suite checks tally correctness with one and twenty concurrent Supervisor clients and records
+median and maximum response times in its JUnit report. This is a workload smoke check for slide 56.
+Section 5 gives the separate release performance target for a representative deployment.
+
+User testing (slides 58–60) uses the manual rehearsal and acceptance cases below. Independent
+release qualification also uses the native and operational evidence in the release checks.
 
 Static checks complement testing: `ruff` and `mypy --strict` are configured in
 `pyproject.toml` (NFR-MNT-01).
@@ -45,42 +53,33 @@ no longer exist.
 | The next commit, `6b0b4a5` ("add resumable election demos and prepare public submission"), deleted `tests/`, deleted `src/election/dev.py` and the `mysql-dev` and `tls-dev` commands of `manage.py` (the helpers that start the test database and create the test certificates), removed `pytest`, `pytest-cov`, `httpx` and `pypdf` from the `dev` dependency group and removed the pytest settings from `pyproject.toml` | `git show --stat 6b0b4a5`; `git diff c68fb54 6b0b4a5 -- pyproject.toml src/election/manage.py` |
 | Between `c68fb54` and release v1.0.0, 127 files under `src/` changed; between `c68fb54` and release v1.1.0, 144 files | `git diff --shortstat c68fb54 v1.0.0 -- src`; `git diff --shortstat c68fb54 v1.1.0 -- src` |
 | Releases v1.0.0 and v1.1.0 therefore contain no automated tests | `git ls-tree --name-only v1.1.0` |
-| E-polling (v1.1.0, 59 files changed) was written after the tests were removed. No automated test for it exists anywhere in the history | `git diff --stat v1.0.0 v1.1.0` |
+| E-polling (v1.1.0, 59 files changed) was written after the tests were removed and shipped with manual test cases | `git diff --stat v1.0.0 v1.1.0` |
 
 Consequences:
 
 - The automated tests named in documents 01 to 10 are evidence of how the system was tested
   during development. They are not part of the submitted release.
-- Because source files changed in and after the commit that removed the tests, the old tests
-  cannot be assumed to pass on v1.1.0. Some will need to be updated.
-- E-polling is covered by manual test cases only (document 14).
+- Source files changed in and after the commit that removed the tests. Use `c68fb54` as a
+  reference when adapting a historical regression case to the current app.
 
-Recommended action (change request CR-02 in document 13), to be done by the repository owner:
+### Current core suite
 
-```sh
-git checkout -b restore-tests
-git checkout c68fb54 -- tests src/election/dev.py
-# put back in src/election/manage.py: the mysql-dev and tls-dev commands
-#   (git diff c68fb54 6b0b4a5 -- src/election/manage.py shows the removed lines)
-# put back in pyproject.toml: pytest, pytest-cov, httpx, pypdf>=6.21.2 in the dev group, and
-#   [tool.pytest.ini_options] testpaths = ["tests"], pythonpath = ["src"], addopts = "-ra"
-uv lock && uv sync
-uv run pytest -q               # needs the test MySQL database and TLS files described in tests/conftest.py
-```
+The current pytest suite adapts cases from `c68fb54` for the current API, database and desktop
+client. Its API and HTTPS system cases use a disposable MySQL 8.4 database.
 
-These commands were written from the Git history and have not been run by the authors of this
-pack. Then record the outcome in the table below. If a full restoration is not possible before
-the deadline, restore at least the API tests of one module per person and report the numbers
-truthfully. New tests for e-polling are change request CR-13.
-
-| Item | Value |
+| Area | Regression cases |
 | --- | --- |
-| Date of run | Not restored in v1.1.0 (CR-02); no automated run is claimed |
-| Commit tested | Not restored in v1.1.0 (CR-02); no automated run is claimed |
-| Tests collected | Not restored in v1.1.0 (CR-02); no automated run is claimed |
-| Passed / failed / errors / skipped | Not restored in v1.1.0 (CR-02); no automated run is claimed |
-| Statement coverage (`pytest --cov=src/election`) | Not restored in v1.1.0 (CR-02); no automated run is claimed |
-| Failures explained by intended changes after `c68fb54` | Not restored in v1.1.0 (CR-02); no automated run is claimed |
+| Staff access | First password change, absolute session expiry, and revision-checked password reset. |
+| Paper-ballot polling | Single active election, exact-revision approval, station assignment, serial bounds, turnout review, mixed EPR fallback turnout and overlapping allocations. |
+| Station operations | Complaint category history and explicit zero reports, queue reminders and retries, ballot-box handover, reserve limits and paper reentry after outages. |
+| Counts and results | Count arithmetic, selection before finalization, preserved results after reopening for a recount, and CSV and PDF exports. |
+| Desktop | Offscreen QML sign-in startup, private UTF-8 command storage, request identity, scope, uncertain-save checks and e-polling session recovery after a lost reply. |
+| E-polling | Single-use voting sessions, service state, status-only recovery and Supervisor tally access. |
+| Deployment settings | Literal password handling, duplicate account names and safe error messages. |
+
+GitHub Actions runs each level on pushes and pull requests and saves its JUnit XML report. See the
+[local commands](../README.md#run-the-core-tests). Use the manual cases below for user evaluation
+and the release checks for native connected-client qualification.
 
 ## 4. Manual system tests
 
