@@ -148,4 +148,4 @@ Automated tests (unit / API level, from the project history):
 | First user confirms four station settings | Administrator configures station and issuing desks before polling day | Set-up is separated from operation |
 | Home, Settings, Refresh, Sign-off icons | Side navigation list, language selector, "Sign out" | Desktop layout |
 
-Rico’s manual run used Election Desk v1.1.0. TC-AUTH-02 screenshots show the shared demo endpoint. The environment for TC-AUTH-03 and TC-AUTH-04 could not be confirmed from the supplied screenshots. TC-AUTH-05 was reported by the tester without screenshot evidence.
+Rico’s manual run used Election Desk v1.1.0. TC-AUTH-02 screenshots show the shared demo endpoint. Rico confirmed the test environments used for TC-AUTH-03 and TC-AUTH-04. TC-AUTH-05 was reported by the tester without screenshot evidence.
