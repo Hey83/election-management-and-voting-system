@@ -118,11 +118,11 @@ System tests (manual, on a rehearsal copy of the paper-ballot demo server):
 
 | ID | Requirement | Pre-condition | Steps | Expected result | Result |
 | --- | --- | --- | --- | --- | --- |
-| TC-AUTH-01 | FR-AUTH-01, FR-AUTH-10 | Demo running; account `demo_polling` | 1. Start the client. 2. Sign in as `demo_polling`. | Workspace opens; only "Harbour Community Hall" is listed; no "Election setup" items | `TODO(Rico)` + screenshot |
-| TC-AUTH-02 | FR-AUTH-02 | Demo running | 1. Sign in as `demo_polling` with a wrong password. 2. Sign in as `nobody` with any password. | The same error message both times; no workspace | `TODO(Rico)` |
-| TC-AUTH-03 | FR-AUTH-07, FR-AUTH-03 | Signed in as `demo_admin` | 1. Open "Staff accounts". 2. Create `test_officer`, role Polling Officer, station Harbour Community Hall, temporary password of 12 characters. 3. Sign out. 4. Sign in as `test_officer`. | The change-password form appears and no other page can be opened | `TODO(Rico)` |
-| TC-AUTH-04 | FR-AUTH-04 | Continue from TC-AUTH-03 | Enter a new password of 11 characters, then the same as the temporary password, then a valid 12-character password. | First two are rejected; third is accepted and the workspace opens | `TODO(Rico)` |
-| TC-AUTH-05 | FR-AUTH-11 | Signed in | Switch language to English, 繁體中文, 简体中文. | All labels change without restart | `TODO(Rico)` |
+| TC-AUTH-01 | FR-AUTH-01, FR-AUTH-10 | Demo running; account `demo_polling` | 1. Start the client. 2. Sign in as `demo_polling`. | Workspace opens; only "Harbour Community Hall" is listed; no "Election setup" items | **PASS** — The Polling Officer workspace opened at Harbour Community Hall and the sidebar omitted Election Setup. [Screenshot](evidence/rico/TC-AUTH-01.png) |
+| TC-AUTH-02 | FR-AUTH-02 | Demo running | 1. Sign in as `demo_polling` with a wrong password. 2. Sign in as `nobody` with any password. | The same error message both times; no workspace | **PASS** — Both attempts stayed on the sign-in page and showed the same error. The second username was absent from the staff account list shown. [Wrong password](evidence/rico/TC-AUTH-02-01.png), [Unknown username](evidence/rico/TC-AUTH-02-02.png), [Staff account list](evidence/rico/TC-AUTH-02-03.png) |
+| TC-AUTH-03 | FR-AUTH-07, FR-AUTH-03 | Signed in as `demo_admin` | 1. Open "Staff accounts". 2. Create `test_officer`, role Polling Officer, station Harbour Community Hall, temporary password of 12 characters. 3. Sign out. 4. Sign in as `test_officer`. | The change-password form appears and no other page can be opened | **PASS** — The new Polling Officer was assigned to Harbour Community Hall and prompted to change the temporary password before the workspace appeared. [Account setup](evidence/rico/TC-AUTH-03-01.png), [First sign-in](evidence/rico/TC-AUTH-03-02.png) |
+| TC-AUTH-04 | FR-AUTH-04 | Continue from TC-AUTH-03 | Enter a new password of 11 characters, then the same as the temporary password, then a valid 12-character password. | First two are rejected; third is accepted and the workspace opens | **PASS** — An 11-character password and reuse of the temporary password were rejected. A valid 12-character password was saved and the workspace opened. [Length validation](evidence/rico/TC-AUTH-04-01.png), [Reuse validation](evidence/rico/TC-AUTH-04-02.png), [Successful change](evidence/rico/TC-AUTH-04-03.png) |
+| TC-AUTH-05 | FR-AUTH-11 | Signed in | Switch language to English, 繁體中文, 简体中文. | All labels change without restart | **PASS (tester-reported)** — English, Traditional Chinese, and Simplified Chinese labels updated immediately without restarting the client. |
 
 Equivalence partitions for the password length (Lecture 8): fewer than 12 (invalid; test 11),
 12 to 128 (valid; test 12 and 128), more than 128 (invalid; test 129).
@@ -147,3 +147,5 @@ Automated tests (unit / API level, from the project history):
 | Password of 8 or more characters with character classes | 12 to 128 characters | Simpler and stronger rule |
 | First user confirms four station settings | Administrator configures station and issuing desks before polling day | Set-up is separated from operation |
 | Home, Settings, Refresh, Sign-off icons | Side navigation list, language selector, "Sign out" | Desktop layout |
+
+Rico’s manual run used Election Desk v1.1.0. TC-AUTH-02 screenshots show the shared demo endpoint. Rico confirmed the test environments used for TC-AUTH-03 and TC-AUTH-04. TC-AUTH-05 was reported by the tester without screenshot evidence.
