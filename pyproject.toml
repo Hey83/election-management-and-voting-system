@@ -20,6 +20,9 @@ server = [
 desktop = ["pyside6", "pydantic", "tzdata"]
 reports = ["reportlab"]
 dev = [
+    "httpx2",
+    "pypdf",
+    "pytest",
     "ruff",
     "mypy",
     "types-PyMySQL",
@@ -30,6 +33,12 @@ build = ["pyinstaller", "pillow"]
 [tool.uv]
 package = false
 default-groups = "all"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = "-ra --strict-markers"
+markers = ["mysql: requires a dedicated MySQL test database"]
 
 [tool.ruff]
 target-version = "py314"

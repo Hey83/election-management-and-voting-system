@@ -101,7 +101,7 @@ listed here so that the report describes the system honestly and shows the next 
 
 | No. | Type | Change request | Evidence | Priority | Owner |
 | --- | --- | --- | --- | --- | --- |
-| CR-01 | Documentation | Publish the project documents. `AGENTS.md` refers to `docs/SPECIFICATION.md`, `docs/adr/`, `docs/BUILDING.md` and other guides, but `docs/` is ignored by Git, so none of them is in the repository. This documentation pack can be committed as `docs/` after the line `/docs/` is removed from `.gitignore` | `AGENTS.md`; `.gitignore` line 9 | High, before submission | Dennis |
+| CR-01 | Documentation | Publish the project documents. `AGENTS.md` refers to `../ignore-docs/SPECIFICATION.md`, `../ignore-docs/adr`, `../ignore-docs/BUILDING.md` and other guides, but `docs/` is ignored by Git, so none of them is in the repository. This documentation pack can be committed as `docs/` after the line `/docs/` is removed from `.gitignore` | `AGENTS.md`; `.gitignore` line 9 | High, before submission | Dennis |
 | CR-02 | Fault prevention | Restore the automated tests removed in commit `6b0b4a5` together with `src/election/dev.py`, re-add the test dependencies and bring failing tests up to date with v1.1.0 | Document 12, section 3 | High | Dennis |
 | CR-03 | Process | Run tests, `ruff` and `mypy` in GitHub Actions on every push; today the only workflow builds the desktop packages | `.github/workflows/build-desktop.yml` | Medium | Dennis |
 | CR-04 | Configuration management | All 830 commits are by one account. Each member should commit their own module document, test evidence and any fix from their own account, through a pull request reviewed by one other member | `git shortlog -sn` | High, before submission | All |
